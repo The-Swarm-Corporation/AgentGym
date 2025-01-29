@@ -36,12 +36,13 @@ The architecture is as follows:
 - SFT: Supervised Fine-Tuning
 - GRPO: Generative Reinforcement Policy Optimization
 
+-> model -> sft -> grpo -> model
 
 ```mermaid
 graph TD;
-    A[SFT] --> B[GRPO]
-    B --> C[RLHF]
-    C --> D[RLHF]
+    A[model] --> B[sft]
+    B --> C[grpo]
+    C --> D[reasoningmodel]
 ```
 
 # License
