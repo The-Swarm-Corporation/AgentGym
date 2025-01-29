@@ -6,16 +6,22 @@ import sys
 import uuid
 from typing import Callable, List, Optional
 
+import torch
+from accelerate import PartialState
 from datasets import load_dataset
 from loguru import logger
 from peft import LoraConfig
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTConfig, SFTTrainer, GRPOConfig, GRPOTrainer
-from accelerate import PartialState
 from pydantic import BaseModel, Field
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from trl import GRPOConfig, GRPOTrainer, SFTConfig, SFTTrainer
 
-from agentgym.reward_funcs import correctness_reward_func, int_reward_func, soft_format_reward_func, strict_format_reward_func, xmlcount_reward_func
+from agentgym.reward_funcs import (
+    correctness_reward_func,
+    int_reward_func,
+    soft_format_reward_func,
+    strict_format_reward_func,
+    xmlcount_reward_func,
+)
 
 peft_config = LoraConfig(
     r=16,
