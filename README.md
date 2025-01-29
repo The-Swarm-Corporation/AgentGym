@@ -4,8 +4,7 @@
 
 [![Join our Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/swarms) [![Subscribe on YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@kyegomez3242) [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/kye-g-38759a207/) [![Follow on X.com](https://img.shields.io/badge/X.com-Follow-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/kyegomezb)
 
-Agent Gym is a framework for training and evaluating reinforcement learning agents in a gym-like environment.
-
+Convert any model into a r1-like reasoning hyper-intelligent agent. Leverages TRL, Huggingface, and various other libraries. This is a work in progress. Our goal is to make it easy to train any model into a reasoning agent.
 
 
 - Sources:
