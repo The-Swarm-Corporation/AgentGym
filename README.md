@@ -29,5 +29,20 @@ r1_pipeline = R1Pipeline(sft_model="gpt2", sft_dataset="stanfordnlp/imdb", sft_a
 r1_pipeline.run()
 ```
 
+## Architecture
+
+The architecture is as follows:
+
+- SFT: Supervised Fine-Tuning
+- GRPO: Generative Reinforcement Policy Optimization
+
+
+```mermaid
+graph TD;
+    A[SFT] --> B[GRPO]
+    B --> C[RLHF]
+    C --> D[RLHF]
+```
+
 # License
 MIT
