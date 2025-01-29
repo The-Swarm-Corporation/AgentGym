@@ -124,6 +124,7 @@ class R1Pipeline:
         grpo_args: GRPOArgs = GRPOArgs(),
         tokenizer_name: str = "None",
         use_prebuilt_reward_funcs: bool = True,
+        only_grpo: bool = False,
         *args,
         **kwargs,
     ):
@@ -150,6 +151,7 @@ class R1Pipeline:
         self.check_gpu_availability = check_gpu_availability
         self.grpo_args = grpo_args
         self.use_prebuilt_reward_funcs = use_prebuilt_reward_funcs
+        self.only_grpo = only_grpo
         self.saved_model_file_path = f"{self.output_dir}/{model_name}_{generate_model_uuid()}.pth"
 
         self.check_for_flash_attention()
@@ -287,17 +289,21 @@ class R1Pipeline:
 
     def run(self):
         try:
-            logger.info(
-                "Starting R1 pipeline with SFT first and then GRPO"
-            )
-            model = self.sft_train()
-            logger.info(
-                f"SFT training completed successfully and model saved to: {model}"
-            )
-            model = self.grpo_train(model)
-            logger.info(
-                f"GRPO training completed successfully and model saved to: {model}"
-            )
+            if self.only_grpo is False:
+                logger.info(
+                    "Starting R1 pipeline with SFT first and then GRPO"
+                )
+                model = self.sft_train()
+                logger.info(
+                    f"SFT training completed successfully and model saved to: {model}"
+                )
+            else:
+                logger.info("Starting R1 pipeline with only GRPO")
+                model = self.grpo_train(self.saved_model_file_path)
+                logger.info(
+                    f"GRPO training completed successfully and model saved to: {model}"
+                )
+
             logger.info("R1 pipeline completed successfully")
             return model
         except Exception as e:

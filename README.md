@@ -42,7 +42,7 @@ The architecture is as follows:
 graph TD;
     A[model] --> B[sft]
     B --> C[grpo]
-    C --> D[reasoningmodel]
+    C --> D[reasoning model]
 ```
 
 # License
