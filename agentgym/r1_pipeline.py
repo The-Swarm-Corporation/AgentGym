@@ -36,28 +36,46 @@ peft_config = LoraConfig(
 )
 
 
-
 class GRPOArgs(BaseModel):
     output_dir: Optional[str] = Field(None, alias="output_dir")
     run_name: Optional[str] = Field(None, alias="run_name")
-    learning_rate: Optional[float] = Field(5e-6, alias="learning_rate")
+    learning_rate: Optional[float] = Field(
+        5e-6, alias="learning_rate"
+    )
     adam_beta1: Optional[float] = Field(0.9, alias="adam_beta1")
     adam_beta2: Optional[float] = Field(0.99, alias="adam_beta2")
     weight_decay: Optional[float] = Field(0.1, alias="weight_decay")
     warmup_ratio: Optional[float] = Field(0.1, alias="warmup_ratio")
-    lr_scheduler_type: Optional[str] = Field('cosine', alias="lr_scheduler_type")
+    lr_scheduler_type: Optional[str] = Field(
+        "cosine", alias="lr_scheduler_type"
+    )
     logging_steps: Optional[int] = Field(1, alias="logging_steps")
     bf16: Optional[bool] = Field(True, alias="bf16")
-    per_device_train_batch_size: Optional[int] = Field(1, alias="per_device_train_batch_size")
-    gradient_accumulation_steps: Optional[int] = Field(4, alias="gradient_accumulation_steps")
-    num_generations: Optional[int] = Field(16, alias="num_generations")
-    max_prompt_length: Optional[int] = Field(256, alias="max_prompt_length")
-    max_completion_length: Optional[int] = Field(786, alias="max_completion_length")
-    num_train_epochs: Optional[int] = Field(1, alias="num_train_epochs")
+    per_device_train_batch_size: Optional[int] = Field(
+        1, alias="per_device_train_batch_size"
+    )
+    gradient_accumulation_steps: Optional[int] = Field(
+        4, alias="gradient_accumulation_steps"
+    )
+    num_generations: Optional[int] = Field(
+        16, alias="num_generations"
+    )
+    max_prompt_length: Optional[int] = Field(
+        256, alias="max_prompt_length"
+    )
+    max_completion_length: Optional[int] = Field(
+        786, alias="max_completion_length"
+    )
+    num_train_epochs: Optional[int] = Field(
+        1, alias="num_train_epochs"
+    )
     save_steps: Optional[int] = Field(100, alias="save_steps")
     max_grad_norm: Optional[float] = Field(0.1, alias="max_grad_norm")
     report_to: Optional[str] = Field("wandb", alias="report_to")
-    log_on_each_node: Optional[bool] = Field(False, alias="log_on_each_node")
+    log_on_each_node: Optional[bool] = Field(
+        False, alias="log_on_each_node"
+    )
+
 
 prebuilt_reward_funcs = [
     xmlcount_reward_func,
@@ -70,11 +88,13 @@ prebuilt_reward_funcs = [
     format_reward_func,
 ]
 
+
 def generate_model_uuid():
     """
     This function generates a short UUID.
     """
     return str(uuid.uuid4())[:8]
+
 
 def check_gpu_availability():
     """
@@ -111,15 +131,15 @@ class R1Pipeline:
         self.sft_args = sft_args
         self.sft_dataset = load_dataset(sft_dataset, split="train")
         device_string = PartialState().process_index
-        
+
         self.sft_model = AutoModelForCausalLM.from_pretrained(
             sft_model,
-            device_map = {'':device_string} if multi_gpu else None
+            device_map={"": device_string} if multi_gpu else None,
         )
-        
+
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        
+
         self.saved_model_file_path = saved_model_file_path
         self.multi_gpu = multi_gpu
         self.peft_config = peft_config
@@ -131,8 +151,11 @@ class R1Pipeline:
         self.grpo_args = grpo_args
         self.use_prebuilt_reward_funcs = use_prebuilt_reward_funcs
         self.saved_model_file_path = f"{self.output_dir}/{model_name}_{generate_model_uuid()}.pth"
-        
+
         self.check_for_flash_attention()
+
+        if self.liger_kernel_on:
+            self.download_liger_kernel()
 
         self.sft_trainer = SFTTrainer(
             model=self.sft_model,
@@ -169,14 +192,25 @@ class R1Pipeline:
         except Exception as e:
             logger.error(f"Error saving model weights: {e}")
             raise e
-        
+
     def check_for_flash_attention(self):
         try:
             device = check_gpu_availability()
-            
+
             if device is True:
-                subprocess.run([sys.executable, "-m", "pip", "install", "flash-attn"], check=True)
-                self.sft_model.attn_implementation="flash_attention_2",
+                subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        "flash-attn",
+                    ],
+                    check=True,
+                )
+                self.sft_model.attn_implementation = (
+                    "flash_attention_2",
+                )
                 logger.info("Flash attention 2 is enabled")
             else:
                 logger.info("Flash attention 2 is not enabled")
@@ -184,19 +218,21 @@ class R1Pipeline:
             logger.error(f"Error checking for flash attention: {e}")
             raise e
 
-
     def load_grpo_args(self):
         config = GRPOArgs(**self.grpo_args)
         training_args = GRPOConfig(**config)
         return training_args
-    
-    
+
     def grpo_train(self, model_path: str, *args, **kwargs):
         try:
             logger.info("Starting GRPO training...")
             training_args = self.load_grpo_args()
-            reward_funcs = prebuilt_reward_funcs if self.use_prebuilt_reward_funcs else self.reward_funcs
-            
+            reward_funcs = (
+                prebuilt_reward_funcs
+                if self.use_prebuilt_reward_funcs
+                else self.reward_funcs
+            )
+
             trainer = GRPOTrainer(
                 model=model_path,
                 processing_class=self.tokenizer,
@@ -206,26 +242,62 @@ class R1Pipeline:
                 *args,
                 **kwargs,
             )
-            
+
             trainer.train()
-            
+
             trainer.save_model(self.saved_model_file_path)
-            
-            logger.info(f"GRPO training completed successfully and model saved to: {self.saved_model_file_path}")
-            
+
+            logger.info(
+                f"GRPO training completed successfully and model saved to: {self.saved_model_file_path}"
+            )
+
             return self.saved_model_file_path
         except Exception as e:
             logger.error(f"Error during GRPO training: {e}")
             raise e
-        
-        
+
+    def download_package(self, package_name: str):
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    package_name,
+                ],
+                check=True,
+            )
+            logger.info(
+                f"Package {package_name} installed successfully"
+            )
+        except Exception as e:
+            logger.error(
+                f"Error installing package {package_name}: {e}"
+            )
+            raise e
+
+    def download_liger_kernel(self):
+        try:
+            self.download_package("liger-kernel")
+            logger.info("Liger kernel installed successfully")
+        except Exception as e:
+            logger.error(f"Error installing liger kernel: {e}")
+            raise e
+
     def run(self):
         try:
-            logger.info("Starting R1 pipeline with SFT first and then GRPO")
+            logger.info(
+                "Starting R1 pipeline with SFT first and then GRPO"
+            )
             model = self.sft_train()
-            logger.info(f"SFT training completed successfully and model saved to: {model}")
+            logger.info(
+                f"SFT training completed successfully and model saved to: {model}"
+            )
             model = self.grpo_train(model)
-            logger.info(f"GRPO training completed successfully and model saved to: {model}")
+            logger.info(
+                f"GRPO training completed successfully and model saved to: {model}"
+            )
             logger.info("R1 pipeline completed successfully")
             return model
         except Exception as e:

@@ -10,6 +10,13 @@ Agent Gym is a framework for training and evaluating reinforcement learning agen
 - [GRPO Documentation from trl](https://huggingface.co/docs/trl/main/en/grpo_trainer)
 - [Huggingface Docs](https://huggingface.co/docs/transformers/main/en/index)
 
+
+## Installation
+
+```bash
+pip3 install -U agentgym
+```
+
 ## Usage
 
 ```python

@@ -7,3 +7,4 @@ trl
 torch
 wandb
 tqdm
+pydantic

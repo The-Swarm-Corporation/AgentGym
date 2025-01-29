@@ -226,6 +226,7 @@ def xmlcount_reward_func(
     ]
     return [count_xml(c) for c in contents]
 
+
 def reward_len(completions: List[dict], **kwargs) -> List[float]:
     """
     Calculates the reward based on the length of the completion, rewarding those close to 20 characters.
@@ -240,7 +241,9 @@ def reward_len(completions: List[dict], **kwargs) -> List[float]:
     return [abs(20 - len(completion)) for completion in completions]
 
 
-def reward_len_strict(completions: List[dict], **kwargs) -> List[float]:
+def reward_len_strict(
+    completions: List[dict], **kwargs
+) -> List[float]:
     """
     Calculates the reward based on the length of the completion, rewarding those close to 20 characters.
 
@@ -268,7 +271,9 @@ def reward_func(completions: List[dict], **kwargs) -> List[float]:
     return [float(len(completion)) for completion in completions]
 
 
-def format_reward_func(completions: List[dict], **kwargs) -> List[float]:
+def format_reward_func(
+    completions: List[dict], **kwargs
+) -> List[float]:
     """
     Reward function that checks if the completion has a specific format.
 
@@ -280,12 +285,18 @@ def format_reward_func(completions: List[dict], **kwargs) -> List[float]:
     - List[float]: A list of rewards for each completion, where the reward is 1.0 if the completion matches the specific format, 0.0 otherwise.
     """
     pattern = r"^<think>.*?</think><answer>.*?</answer>$"
-    completion_contents = [completion[0]["content"] for completion in completions]
-    matches = [re.match(pattern, content) for content in completion_contents]
+    completion_contents = [
+        completion[0]["content"] for completion in completions
+    ]
+    matches = [
+        re.match(pattern, content) for content in completion_contents
+    ]
     return [1.0 if match else 0.0 for match in matches]
 
 
-def reward_func_for_format(completions: List[dict], ground_truth: List[str], **kwargs) -> List[float]:
+def reward_func_for_format(
+    completions: List[dict], ground_truth: List[str], **kwargs
+) -> List[float]:
     """
     Reward function that rewards completions based on their content matching the ground truth.
 
@@ -298,7 +309,13 @@ def reward_func_for_format(completions: List[dict], ground_truth: List[str], **k
     - List[float]: A list of rewards for each completion, where the reward is 1.0 if the content matches the ground truth, 0.0 otherwise.
     """
     # Regular expression to capture content inside \boxed{}
-    matches = [re.search(r"\\boxed\{(.*?)\}", completion) for completion in completions]
+    matches = [
+        re.search(r"\\boxed\{(.*?)\}", completion)
+        for completion in completions
+    ]
     contents = [match.group(1) if match else "" for match in matches]
     # Reward 1 if the content is the same as the ground truth, 0 otherwise
-    return [1.0 if c == gt else 0.0 for c, gt in zip(contents, ground_truth)]
+    return [
+        1.0 if c == gt else 0.0
+        for c, gt in zip(contents, ground_truth)
+    ]
