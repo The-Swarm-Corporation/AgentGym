@@ -19,6 +19,7 @@ eggs/
 lib/
 lib64/
 parts/
+wandb/
 .ruff_cache/
 sdist/
 var/
