@@ -125,6 +125,7 @@ class R1Pipeline:
         tokenizer_name: str = "None",
         use_prebuilt_reward_funcs: bool = True,
         only_grpo: bool = False,
+        use_vllm: bool = False,
         *args,
         **kwargs,
     ):
@@ -152,6 +153,8 @@ class R1Pipeline:
         self.grpo_args = grpo_args
         self.use_prebuilt_reward_funcs = use_prebuilt_reward_funcs
         self.only_grpo = only_grpo
+        self.use_vllm = use_vllm
+        
         self.saved_model_file_path = f"{self.output_dir}/{model_name}_{generate_model_uuid()}.pth"
 
         self.check_for_flash_attention()
@@ -166,11 +169,11 @@ class R1Pipeline:
             peft_config=(
                 self.peft_config if sft_lora_only is True else None
             ),
-            use_liger=(
-                self.liger_kernel_on
-                if liger_kernel_on is True
-                else False
-            ),
+            # use_liger=(
+            #     self.liger_kernel_on
+            #     if liger_kernel_on is True
+            #     else False
+            # ),
             *args,
             **kwargs,
         )
@@ -221,9 +224,52 @@ class R1Pipeline:
             raise e
 
     def load_grpo_args(self):
-        config = GRPOArgs(**self.grpo_args)
-        training_args = GRPOConfig(**config)
-        return training_args
+        args = GRPOArgs()
+
+        # Ensure all necessary attributes are set with default values if they are None
+        args.output_dir = args.output_dir or '/tmp'
+        args.run_name = args.run_name or 'default_run_name'
+        args.learning_rate = args.learning_rate or 5e-5
+        args.adam_beta1 = args.adam_beta1 or 0.9
+        args.adam_beta2 = args.adam_beta2 or 0.999
+        args.weight_decay = args.weight_decay or 0.01
+        args.warmup_ratio = args.warmup_ratio or 0.1
+        args.lr_scheduler_type = args.lr_scheduler_type or 'linear'
+        args.logging_steps = args.logging_steps or 500
+        args.bf16 = args.bf16 if args.bf16 is not None else False
+        args.per_device_train_batch_size = args.per_device_train_batch_size or 8
+        args.gradient_accumulation_steps = args.gradient_accumulation_steps or 1
+        args.num_generations = args.num_generations or 1
+        args.max_prompt_length = args.max_prompt_length or 512
+        args.max_completion_length = args.max_completion_length or 128
+        args.num_train_epochs = args.num_train_epochs or 3
+        args.save_steps = args.save_steps or 1000
+        args.max_grad_norm = args.max_grad_norm or 1.0
+        args.report_to = args.report_to or 'none'
+        args.log_on_each_node = args.log_on_each_node if args.log_on_each_node is not None else False
+
+        return GRPOConfig(
+            output_dir=args.output_dir,
+            run_name=args.run_name,
+            learning_rate=args.learning_rate,
+            adam_beta1=args.adam_beta1,
+            adam_beta2=args.adam_beta2,
+            weight_decay=args.weight_decay,
+            warmup_ratio=args.warmup_ratio,
+            lr_scheduler_type=args.lr_scheduler_type,
+            logging_steps=args.logging_steps,
+            bf16=args.bf16,
+            per_device_train_batch_size=args.per_device_train_batch_size,
+            gradient_accumulation_steps=args.gradient_accumulation_steps,
+            num_generations=args.num_generations,
+            max_prompt_length=args.max_prompt_length,
+            max_completion_length=args.max_completion_length,
+            num_train_epochs=args.num_train_epochs,
+            save_steps=args.save_steps,
+            max_grad_norm=args.max_grad_norm,
+            report_to=args.report_to,
+            log_on_each_node=args.log_on_each_node,
+        )
 
     def grpo_train(self, model_path: str, *args, **kwargs):
         try:
@@ -236,7 +282,7 @@ class R1Pipeline:
             )
 
             trainer = GRPOTrainer(
-                model=model_path,
+                model=self.sft_model,
                 processing_class=self.tokenizer,
                 reward_funcs=reward_funcs,
                 args=training_args,
