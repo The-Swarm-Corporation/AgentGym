@@ -6,10 +6,19 @@
 Agent Gym is a framework for training and evaluating reinforcement learning agents in a gym-like environment.
 
 - Sources:
-
 - [Open R1 Blog](https://huggingface.co/blog/open-r1)
 - [GRPO Documentation from trl](https://huggingface.co/docs/trl/main/en/grpo_trainer)
 - [Huggingface Docs](https://huggingface.co/docs/transformers/main/en/index)
+
+## Usage
+
+```python
+from agentgym.r1_pipeline import R1Pipeline, SFTConfig
+
+r1_pipeline = R1Pipeline(sft_model="gpt2", sft_dataset="stanfordnlp/imdb", sft_args=SFTConfig(output_dir="/tmp"))
+
+r1_pipeline.run()
+```
 
 # License
 MIT

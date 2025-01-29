@@ -17,7 +17,10 @@ from trl import GRPOConfig, GRPOTrainer, SFTConfig, SFTTrainer
 
 from agentgym.reward_funcs import (
     correctness_reward_func,
+    format_reward_func,
     int_reward_func,
+    reward_func_for_format,
+    reward_len,
     soft_format_reward_func,
     strict_format_reward_func,
     xmlcount_reward_func,
@@ -56,8 +59,16 @@ class GRPOArgs(BaseModel):
     report_to: Optional[str] = Field("wandb", alias="report_to")
     log_on_each_node: Optional[bool] = Field(False, alias="log_on_each_node")
 
-# training_args = TrainingArgs()
-
+prebuilt_reward_funcs = [
+    xmlcount_reward_func,
+    soft_format_reward_func,
+    strict_format_reward_func,
+    int_reward_func,
+    correctness_reward_func,
+    reward_len,
+    reward_func_for_format,
+    format_reward_func,
+]
 
 def generate_model_uuid():
     """
@@ -91,7 +102,8 @@ class R1Pipeline:
         model_name: str = "agent-gym-r1",
         check_gpu_availability: bool = check_gpu_availability,
         grpo_args: GRPOArgs = GRPOArgs(),
-        tokenizer_name: str = None,
+        tokenizer_name: str = "None",
+        use_prebuilt_reward_funcs: bool = True,
         *args,
         **kwargs,
     ):
@@ -117,6 +129,7 @@ class R1Pipeline:
         self.model_name = model_name
         self.check_gpu_availability = check_gpu_availability
         self.grpo_args = grpo_args
+        self.use_prebuilt_reward_funcs = use_prebuilt_reward_funcs
         self.saved_model_file_path = f"{self.output_dir}/{model_name}_{generate_model_uuid()}.pth"
         
         self.check_for_flash_attention()
@@ -182,17 +195,12 @@ class R1Pipeline:
         try:
             logger.info("Starting GRPO training...")
             training_args = self.load_grpo_args()
+            reward_funcs = prebuilt_reward_funcs if self.use_prebuilt_reward_funcs else self.reward_funcs
             
             trainer = GRPOTrainer(
                 model=model_path,
                 processing_class=self.tokenizer,
-                reward_funcs=[
-                    xmlcount_reward_func,
-                    soft_format_reward_func,
-                    strict_format_reward_func,
-                    int_reward_func,
-                    correctness_reward_func,
-                ],
+                reward_funcs=reward_funcs,
                 args=training_args,
                 train_dataset=self.sft_dataset,
                 *args,
@@ -203,13 +211,23 @@ class R1Pipeline:
             
             trainer.save_model(self.saved_model_file_path)
             
-            logger.info("GRPO training completed successfully and model saved.")
+            logger.info(f"GRPO training completed successfully and model saved to: {self.saved_model_file_path}")
+            
+            return self.saved_model_file_path
         except Exception as e:
             logger.error(f"Error during GRPO training: {e}")
             raise e
         
         
     def run(self):
-        model = self.sft_train()
-        model = self.grpo_train(model)
-        return model
+        try:
+            logger.info("Starting R1 pipeline with SFT first and then GRPO")
+            model = self.sft_train()
+            logger.info(f"SFT training completed successfully and model saved to: {model}")
+            model = self.grpo_train(model)
+            logger.info(f"GRPO training completed successfully and model saved to: {model}")
+            logger.info("R1 pipeline completed successfully")
+            return model
+        except Exception as e:
+            logger.error(f"Error during R1 pipeline: {e}")
+            raise e
