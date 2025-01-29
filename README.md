@@ -11,6 +11,7 @@ Convert any model into a r1-like reasoning hyper-intelligent agent. Leverages TR
 - [Open R1 Blog](https://huggingface.co/blog/open-r1)
 - [GRPO Documentation from trl](https://huggingface.co/docs/trl/main/en/grpo_trainer)
 - [Huggingface Docs](https://huggingface.co/docs/transformers/main/en/index)
+- [GRPO Docs](https://huggingface.co/docs/trl/main/en/grpo_trainer)
 
 
 ## Installation
