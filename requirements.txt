@@ -1,3 +1,9 @@
+accelerate
+peft
+transformers
+datasets
+loguru
+trl
 torch
-zetascale
-swarms
+wandb
+tqdm

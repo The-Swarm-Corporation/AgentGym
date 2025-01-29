@@ -5,6 +5,12 @@
 
 Agent Gym is a framework for training and evaluating reinforcement learning agents in a gym-like environment.
 
+- Sources:
+
+- [Open R1 Blog](https://huggingface.co/blog/open-r1)
+- [GRPO Documentation from trl](https://huggingface.co/docs/trl/main/en/grpo_trainer)
+- [Flash Attention 2 Blog](https://huggingface.co/blog/flash-attention-2)
+
 
 # License
 MIT
